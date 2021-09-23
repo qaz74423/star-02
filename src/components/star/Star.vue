@@ -1,77 +1,80 @@
 <script lang="ts" setup>import { onMounted, ref } from "@vue/runtime-core";
-let sky = ref<any>()
+let sky = ref<HTMLDivElement>()
 let canvas = ref<HTMLCanvasElement>()
+let _width: number
+let _height: number
+let stars: (Star)[] = []
 
+const initStarsPopulation = 80;
+let ctx: (CanvasRenderingContext2D | null | undefined)
+class Star {
+    private id: number;
+    private x: number;
+    private y: number;
+    private r: number = Math.floor(Math.random() * 2) + 1;
+    private alpha: number = (Math.floor(Math.random() * 10) + 1) / 10 / 2
+    private color: string = `rgba(255,255,255,${this.alpha})`
 
-onMounted(() => {
-    sky.value.height = window.innerHeight
-    sky.value.width = window.innerWidth
-
-    let ctx = canvas.value?.getContext("2d")
-    let _width = sky.value.width
-    let _height = sky.value.height
-    let stars: (any)[] = []
-    let initStarsPopulation = 80;
-    class Star {
-        private id: any;
-        private x: any;
-        private y: any;
-        private r: any;
-        private alpha: any = (Math.floor(Math.random() * 10) + 1) / 10 / 2
-        private color: any;
-        constructor(id: any, x: any, y: any) {
-            this.id = id;
-            this.x = x;
-            this.y = y
-            this.r = Math.floor(Math.random() * 2) + 1
-            this.color = `rgba(255,255,255,${this.alpha})`
-        }
-
-        draw() {
-            if (!ctx) return
-            ctx.fillStyle = this.color;//填充色
-            ctx.shadowBlur = this.r * 2//阴影
-            ctx.beginPath();//起始路径
-            ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI, false)//弧
-            ctx.closePath();//闭合路径
-            ctx.fill()//填充
-        }
-        move() {
-            this.y -= 0.2
-            if (this.y <= -10) this.y = _height + 10
-            this.draw()
-        }
-        die() {
-            stars[this.id] = null;
-            delete stars[this.id]
-        }
+    constructor(id: number, x: number, y: number) {
+        this.id = id;
+        this.x = x;
+        this.y = y
     }
-    const animate = () => {
-        ctx?.clearRect(0, 0, _width, _height);
-        for (let i in stars) {
-            stars[i].move();
-        }
-        requestAnimationFrame(animate)
-    }
-    const __init__ = () => {
+
+    draw() {
         if (!ctx) return
-        ctx.strokeStyle = "white";
-        ctx.shadowColor = "white"
+        ctx.fillStyle = this.color;//填充色
+        ctx.shadowBlur = this.r * 2//阴影
+        ctx.beginPath();//起始路径
+        ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI, false)//弧
+        ctx.closePath();//闭合路径
+        ctx.fill()//填充
+    }
+    move(startHeight: number = _height, speed: number = 1) {
+        this.y -= speed
+        if (this.y <= -10) this.y = startHeight
+        this.draw()
+    }
+    // die() {
+    //     stars[this.id] = null;
+    //     delete stars[this.id]
+    // }
+}
+const animate = (): void => {
+    ctx?.clearRect(0, 0, _width, _height);
+    for (let i in stars) {
+        stars[i].move();
+    }
+    requestAnimationFrame(animate)
+}
+const __init__ = () => {
+    if (!ctx) return
+    ctx.strokeStyle = "white";
+    ctx.shadowColor = "white"
 
-        for (let i = 0; i < initStarsPopulation; i++) {
-            stars[i] = new Star(i, Math.floor(Math.random() * _width), Math.floor(Math.random() * _height))
-        }
-        ctx.shadowBlur = 0;
-        animate();
+    for (let i = 0; i < initStarsPopulation; i++) {
+        stars[i] = new Star(i, Math.floor(Math.random() * _width), Math.floor(Math.random() * _height))
     }
-    const setCanvasSise = () => {
-        canvas.value?.setAttribute("width", _width)
-        canvas.value?.setAttribute("height", _height)
+    ctx.shadowBlur = 0;
+    animate();
+}
+
+const setCanvasSise = (w: number, h: number): void => {
+    canvas.value?.setAttribute("width", w + "")
+    canvas.value?.setAttribute("height", h + "")
+}
+onMounted(() => {
+    _height = window.innerHeight
+    _width = window.innerWidth
+    if (sky.value) {
+        sky.value.style.height = _height + "px"
+        sky.value.style.width = _width + "px"
     }
-    setCanvasSise()
+
+    ctx = canvas.value?.getContext("2d")
+
+    setCanvasSise(_width, _height)
     __init__()
-
-
 
 })
 </script>
